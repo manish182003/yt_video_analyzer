@@ -1,5 +1,6 @@
 import os
 import time
+import requests
 from dotenv import load_dotenv
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -9,6 +10,26 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+
+# ==========================================
+# 🛡️ USER-AGENT PATCH (Place this at the top)
+# ==========================================
+# Define a real browser user agent to fool YouTube
+BROWSER_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+
+def get_patched_session():
+    """Factory to create a requests session that looks like Chrome."""
+    session = requests.Session()
+    session.headers.update({"User-Agent": BROWSER_USER_AGENT})
+    return session
+
+
+# OVERRIDE the requests library globally
+# This effectively 'tricks' youtube_transcript_api into using our headers
+requests.Session = get_patched_session
+# =======
+
 
 # Load env variables
 load_dotenv()
